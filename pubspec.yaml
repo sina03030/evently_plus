@@ -1,0 +1,28 @@
+name: evently_plus
+description: A local fork of Evently for tracking user events and application analytics.
+version: 2.1.0
+publish_to: 'none'
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: ">=3.0.0"
+
+homepage: https://github.com/EbramWagdy1/evently
+repository: https://github.com/EbramWagdy1/evently
+issue_tracker: https://github.com/EbramWagdy1/evently/issues
+
+dependencies:
+  dartz: ^0.10.1
+  equatable: ^2.0.5
+  flutter:
+    sdk: flutter
+  http: ^1.2.0
+  shared_preferences: ^2.2.2
+  uuid: ^4.5.2
+  workmanager: ^0.10.7
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  mocktail: ^1.0.3

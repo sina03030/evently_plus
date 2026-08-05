@@ -1,0 +1,8 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - "pub_cache/**"
+    - "**/generated/**"
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
