@@ -1,5 +1,7 @@
 # Evently Plus
 
+[![pub package](https://img.shields.io/pub/v/evently_plus.svg)](https://pub.dev/packages/evently_plus)
+[![pub points](https://img.shields.io/pub/points/evently_plus)](https://pub.dev/packages/evently_plus/score)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 An independently maintained Flutter event-tracking SDK with persistent local
@@ -20,7 +22,7 @@ of [Evently](https://github.com/EbramWagdy1/evently).
 
 ## 📦 Installation
 
-Add the package after it is published:
+Install the latest release from pub.dev:
 
 ```bash
 flutter pub add evently_plus
@@ -153,7 +155,7 @@ body has this shape:
     }
   ],
   "timestamp": "2026-08-05T12:01:00.000Z",
-  "sdk_version": "2.1.0"
+  "sdk_version": "2.1.1"
 }
 ```
 
@@ -273,9 +275,11 @@ The SDK includes comprehensive tests for:
 - Error handling
 - Logging
 
-## 📚 Example
+## 📚 Documentation
 
-See the [example](example/) directory for a complete demo app showing all features.
+- Read the [API reference](https://pub.dev/documentation/evently_plus/latest/).
+- See the [example](example/) directory for a complete demo app.
+- Review the [changelog](CHANGELOG.md) before upgrading.
 
 ## 🔄 Migration from v1.x
 
@@ -319,7 +323,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## 📞 Support
 
-For issues, feature requests, or questions, please file an issue on the GitHub repository.
+For issues, feature requests, or questions, [open a GitHub issue](https://github.com/sina03030/evently_plus/issues).
 
 ---
 

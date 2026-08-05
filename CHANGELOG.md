@@ -2,7 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
-## Unreleased
+## 2.1.1 - 2026-08-05
+
+- Updated the README for the published pub.dev package.
+- Added pub.dev version, score, and API-documentation links.
+- Corrected the changelog so features shipped in 2.1.0 are grouped with that
+  release.
+- Kept the SDK version reported in uploads and logs synchronized with the
+  package version.
+
+## 2.1.0 - 2026-08-05
 
 - Added `EventlyNavigatorObserver` for foreground-visible screen-time tracking.
 - Replaced the hard-coded `/store` upload path with a required, consumer-owned
@@ -15,23 +24,20 @@ All notable changes to this project will be documented in this file.
 - Added migration for background configuration persisted by earlier local
   versions.
 - Documented the HTTP upload contract and background credential-storage model.
-
-## [2.1.0] - 2026-07-20
-
 - Added an hourly Workmanager task for uploading queued events in the background.
 - Made event logging local-only; the Workmanager callback is the sole sender.
 - Persist events so the background isolate can access the durable queue.
 - Keep queued events until background delivery succeeds; no count-based eviction.
 - Removed foreground batching, retry, flush, and HTTP-client APIs.
 - Added Android and iOS background-upload setup and documentation.
-- Forked the package locally as `evently_plus`.
+- Released the independently maintained fork as `evently_plus`.
 
-## [2.0.1] - 2026-01-08
+## 2.0.1 - 2026-01-08
 
 ### 🐛 Fixed
 - Fixed `pubspec.yaml` repository URL mismatch to match the actual GitHub repository URL.
 
-## [2.0.0] - 2026-01-08
+## 2.0.0 - 2026-01-08
 
 ### 🎉 Major Release - Complete Rewrite
 
@@ -103,7 +109,7 @@ This is a complete architectural rewrite of Evently with breaking changes.
 #### Version
 - Updated from `0.1.0` to `2.0.0`
 
-## [0.1.0] - 2026-01-02
+## 0.1.0 - 2026-01-02
 
 ### Initial Release
 
@@ -114,6 +120,3 @@ This is a complete architectural rewrite of Evently with breaking changes.
 - MIT License
 
 ---
-
-[2.0.0]: https://github.com/example/evently/compare/v0.1.0...v2.0.0
-[0.1.0]: https://github.com/example/evently/releases/tag/v0.1.0
