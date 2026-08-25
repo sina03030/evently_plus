@@ -7,8 +7,11 @@ import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:evently_plus/src/background/background_upload_config_store.dart';
+import 'package:evently_plus/src/data/datasources/event_local_datasource.dart';
 import 'package:evently_plus/src/data/datasources/event_remote_datasource.dart';
 import 'package:evently_plus/src/data/models/event_model.dart';
+import 'package:evently_plus/src/upload/event_queue_uploader.dart';
+import 'package:evently_plus/src/upload/runtime_upload_scheduler_web.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -27,6 +30,7 @@ void main() {
       expect(config.environment, 'production');
       expect(config.debugMode, false);
       expect(config.enableBackgroundUpload, true);
+      expect(config.enableWebUpload, true);
       expect(config.backgroundUploadFrequency, const Duration(hours: 1));
     });
 
@@ -60,11 +64,13 @@ void main() {
       final newConfig = config.copyWith(
         debugMode: true,
         requestHeaders: const {'X-Client': 'example'},
+        enableWebUpload: false,
       );
 
       expect(newConfig.debugMode, true);
       expect(newConfig.uploadEndpoint, config.uploadEndpoint);
       expect(newConfig.requestHeaders, const {'X-Client': 'example'});
+      expect(newConfig.enableWebUpload, false);
     });
 
     test('should reject a background interval shorter than 15 minutes', () {
@@ -214,6 +220,115 @@ void main() {
     });
   });
 
+  group('EventQueueUploader', () {
+    setUp(() {
+      SharedPreferences.setMockInitialValues({});
+    });
+
+    test('removes a queued batch only after a successful upload', () async {
+      final preferences = await SharedPreferences.getInstance();
+      final localDataSource = EventLocalDataSourceImpl(
+        prefs: preferences,
+        logger: const SilentLogger(),
+      );
+      await localDataSource.addEvent(
+        EventModel.fromEntity(Event.create(name: 'first')),
+      );
+      await localDataSource.addEvent(
+        EventModel.fromEntity(Event.create(name: 'second')),
+      );
+      final uploader = EventQueueUploader(
+        localDataSource: localDataSource,
+        remoteDataSource: EventRemoteDataSourceImpl(
+          client: MockClient((_) async => http.Response('', 202)),
+          config: EventlyConfig(
+            uploadEndpoint: Uri.parse('https://collector.example.com/events'),
+          ),
+          logger: const SilentLogger(),
+        ),
+      );
+
+      final uploadedCount = await uploader.uploadPending();
+
+      expect(uploadedCount, 2);
+      expect(await localDataSource.getEvents(), isEmpty);
+    });
+
+    test('leaves a failed batch in the queue', () async {
+      final preferences = await SharedPreferences.getInstance();
+      final localDataSource = EventLocalDataSourceImpl(
+        prefs: preferences,
+        logger: const SilentLogger(),
+      );
+      await localDataSource.addEvent(
+        EventModel.fromEntity(Event.create(name: 'retry_me')),
+      );
+      final uploader = EventQueueUploader(
+        localDataSource: localDataSource,
+        remoteDataSource: EventRemoteDataSourceImpl(
+          client: MockClient((_) async => http.Response('', 503)),
+          config: EventlyConfig(
+            uploadEndpoint: Uri.parse('https://collector.example.com/events'),
+          ),
+          logger: const SilentLogger(),
+        ),
+      );
+
+      await expectLater(
+        uploader.uploadPending(),
+        throwsA(isA<NetworkException>()),
+      );
+
+      expect(await localDataSource.getEvents(), hasLength(1));
+    });
+  });
+
+  group('WebRuntimeUploadScheduler', () {
+    setUp(() {
+      SharedPreferences.setMockInitialValues({});
+    });
+
+    test('uploads queued events without overlapping requests', () async {
+      final preferences = await SharedPreferences.getInstance();
+      final localDataSource = EventLocalDataSourceImpl(
+        prefs: preferences,
+        logger: const SilentLogger(),
+      );
+      await localDataSource.addEvent(
+        EventModel.fromEntity(Event.create(name: 'web_event')),
+      );
+      var requestCount = 0;
+      final client = MockClient((_) async {
+        requestCount++;
+        return http.Response('', 200);
+      });
+      final scheduler = WebRuntimeUploadScheduler(
+        client: client,
+        uploader: EventQueueUploader(
+          localDataSource: localDataSource,
+          remoteDataSource: EventRemoteDataSourceImpl(
+            client: client,
+            config: EventlyConfig(
+              uploadEndpoint: Uri.parse(
+                'https://collector.example.com/events',
+              ),
+            ),
+            logger: const SilentLogger(),
+          ),
+        ),
+        logger: const SilentLogger(),
+      );
+
+      scheduler.requestUpload();
+      scheduler.requestUpload();
+      await scheduler.waitForIdle();
+
+      expect(requestCount, 1);
+      expect(await localDataSource.getEvents(), isEmpty);
+      scheduler.dispose();
+    });
+  });
+
   group('BackgroundUploadConfigStore', () {
     setUp(() {
       SharedPreferences.setMockInitialValues({});
@@ -230,6 +345,7 @@ void main() {
         environment: 'qa',
         requestTimeout: const Duration(seconds: 12),
         backgroundUploadFrequency: const Duration(minutes: 45),
+        enableWebUpload: false,
         appVersion: '7.2.0',
         releaseMarket: 'internal',
       );
@@ -242,6 +358,7 @@ void main() {
       expect(restored.requestHeaders, config.requestHeaders);
       expect(restored.environment, config.environment);
       expect(restored.requestTimeout, config.requestTimeout);
+      expect(restored.enableWebUpload, false);
       expect(
         restored.backgroundUploadFrequency,
         config.backgroundUploadFrequency,
@@ -318,6 +435,7 @@ void main() {
         config: EventlyConfig(
           uploadEndpoint: Uri.parse('https://api.example.com/v1/events'),
           debugMode: true,
+          enableWebUpload: false,
           appVersion: '4',
           releaseMarket: 'BAZZAR',
         ),
@@ -354,6 +472,7 @@ void main() {
         config: EventlyConfig(
           uploadEndpoint: Uri.parse('https://api.example.com/v1/events'),
           enableBackgroundUpload: false,
+          enableWebUpload: false,
         ),
         sharedPreferences: preferences,
       );
@@ -385,6 +504,7 @@ void main() {
         config: EventlyConfig(
           uploadEndpoint: Uri.parse('https://api.example.com/v1/events'),
           enableBackgroundUpload: false,
+          enableWebUpload: false,
         ),
         sharedPreferences: preferences,
       );
@@ -463,6 +583,7 @@ void main() {
         config: EventlyConfig(
           uploadEndpoint: Uri.parse('https://api.example.com/v1/events'),
           debugMode: true,
+          enableWebUpload: false,
         ),
       );
 

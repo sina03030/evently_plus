@@ -25,6 +25,12 @@ class EventlyConfig {
   /// Schedule periodic background uploads on Android and iOS.
   final bool enableBackgroundUpload;
 
+  /// Upload queued events while the web app is open.
+  ///
+  /// Browsers do not provide reliable cross-browser background execution, so
+  /// web delivery is retried when the page starts and after an event is queued.
+  final bool enableWebUpload;
+
   /// Requested interval between Android background uploads.
   ///
   /// Android enforces a minimum interval of 15 minutes. On iOS, the equivalent
@@ -44,6 +50,7 @@ class EventlyConfig {
     this.debugMode = false,
     this.requestTimeout = const Duration(seconds: 30),
     this.enableBackgroundUpload = true,
+    this.enableWebUpload = true,
     this.backgroundUploadFrequency = const Duration(hours: 1),
     this.appVersion = 'unknown',
     this.releaseMarket = 'unknown',
@@ -99,6 +106,7 @@ class EventlyConfig {
     bool? debugMode,
     Duration? requestTimeout,
     bool? enableBackgroundUpload,
+    bool? enableWebUpload,
     Duration? backgroundUploadFrequency,
     String? appVersion,
     String? releaseMarket,
@@ -111,6 +119,7 @@ class EventlyConfig {
       requestTimeout: requestTimeout ?? this.requestTimeout,
       enableBackgroundUpload:
           enableBackgroundUpload ?? this.enableBackgroundUpload,
+      enableWebUpload: enableWebUpload ?? this.enableWebUpload,
       backgroundUploadFrequency:
           backgroundUploadFrequency ?? this.backgroundUploadFrequency,
       appVersion: appVersion ?? this.appVersion,

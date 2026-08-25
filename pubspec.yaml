@@ -1,5 +1,5 @@
 name: evently_plus
-description: An independently maintained Flutter SDK for persistent event tracking and background-only analytics delivery.
+description: A persistent event-tracking SDK with background mobile delivery and automatic web delivery.
 version: 2.1.1
 
 environment:

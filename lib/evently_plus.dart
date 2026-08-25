@@ -4,6 +4,7 @@
 /// - Clean architecture with separation of concerns
 /// - Durable local event queue
 /// - Background-only uploads on Android and iOS
+/// - Automatic foreground uploads on web
 /// - Type-safe error handling
 /// - Structured logging
 /// - Production-ready with proper abstractions

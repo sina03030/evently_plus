@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+- Added zero-setup Flutter Web support. Web apps now upload the durable queue
+  while the page is active and retry retained events on the next page load.
+- Shared the queue upload operation between mobile Workmanager tasks and web
+  runtime delivery while keeping scheduling platform-specific.
+- Added `enableWebUpload` for applications that only want local web queuing.
+
 ## 2.1.1 - 2026-08-05
 
 - Updated the README for the published pub.dev package.

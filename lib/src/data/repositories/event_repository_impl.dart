@@ -8,8 +8,8 @@ import '../models/event_model.dart';
 
 /// Runtime repository that only persists events to the durable local queue.
 ///
-/// Network delivery is intentionally owned by the background upload worker. This
-/// repository must never send events while the application isolate is running.
+/// Network delivery is intentionally owned by the platform upload schedulers,
+/// keeping persistence independent from when each platform can send events.
 class EventRepositoryImpl implements EventRepository {
   final EventLocalDataSource localDataSource;
   final EventlyLogger logger;

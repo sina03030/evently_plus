@@ -22,6 +22,7 @@ class BackgroundUploadConfigStore {
         'debugMode': config.debugMode,
         'requestTimeoutMilliseconds': config.requestTimeout.inMilliseconds,
         'enableBackgroundUpload': config.enableBackgroundUpload,
+        'enableWebUpload': config.enableWebUpload,
         'backgroundUploadFrequencyMilliseconds':
             config.backgroundUploadFrequency.inMilliseconds,
         'appVersion': config.appVersion,
@@ -45,6 +46,7 @@ class BackgroundUploadConfigStore {
         debugMode: json['debugMode'] as bool? ?? false,
         requestTimeout: _readRequestTimeout(json),
         enableBackgroundUpload: json['enableBackgroundUpload'] as bool? ?? true,
+        enableWebUpload: json['enableWebUpload'] as bool? ?? true,
         backgroundUploadFrequency: Duration(
           milliseconds: (json['backgroundUploadFrequencyMilliseconds'] as num?)
                   ?.toInt() ??

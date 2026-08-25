@@ -8,6 +8,7 @@ import '../core/config/evently_config.dart';
 import '../core/logging/logger.dart';
 import '../data/datasources/event_local_datasource.dart';
 import '../data/datasources/event_remote_datasource.dart';
+import '../upload/event_queue_uploader.dart';
 import 'background_upload_config_store.dart';
 
 const String eventlyBackgroundUploadUniqueName =
@@ -80,21 +81,20 @@ void eventlyBackgroundCallbackDispatcher() {
         prefs: preferences,
         logger: logger,
       );
-      final events = await localDataSource.getEvents();
-      if (events.isEmpty) return true;
-
       final remoteDataSource = EventRemoteDataSourceImpl(
         client: client,
         config: config,
         logger: logger,
       );
-      await remoteDataSource.sendEvents(events);
-      await localDataSource.removeEventsById(
-        events.map((event) => event.id),
-      );
-      logger.info(
-        'Background upload sent ${events.length} queued event(s)',
-      );
+      final uploadedCount = await EventQueueUploader(
+        localDataSource: localDataSource,
+        remoteDataSource: remoteDataSource,
+      ).uploadPending();
+      if (uploadedCount > 0) {
+        logger.info(
+          'Background upload sent $uploadedCount queued event(s)',
+        );
+      }
       return true;
     } catch (_) {
       // Returning false asks Android WorkManager to retry using its backoff

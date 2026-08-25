@@ -224,8 +224,8 @@ class _EventlyDemoScreenState extends State<EventlyDemoScreen> {
                       'Production-ready analytics SDK with:\n'
                       '• Clean architecture\n'
                       '• Durable local queue\n'
-                      '• Background-only upload\n'
-                      '• No runtime network requests\n'
+                      '• Background mobile upload\n'
+                      '• Automatic web upload\n'
                       '• Error handling',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),

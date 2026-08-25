@@ -5,7 +5,7 @@ import '../entities/event.dart';
 /// Repository interface for event operations.
 ///
 /// This defines the contract for runtime event persistence. Transmission is
-/// handled separately by scheduled background work.
+/// handled separately by the platform upload schedulers.
 abstract class EventRepository {
   /// Track a single event.
   ///
@@ -13,7 +13,7 @@ abstract class EventRepository {
   /// Returns [Left] with [Failure] on error.
   Future<Either<Failure, void>> trackEvent(Event event);
 
-  /// Get events waiting for background upload.
+  /// Get events waiting for upload.
   ///
   /// Returns [Right] with list of events on success.
   /// Returns [Left] with [Failure] on error.

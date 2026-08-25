@@ -5,15 +5,17 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 An independently maintained Flutter event-tracking SDK with persistent local
-queuing and background-only remote delivery. Evently Plus is an unofficial fork
-of [Evently](https://github.com/EbramWagdy1/evently).
+queuing, background delivery on Android and iOS, and automatic delivery while
+a web app is open. Evently Plus is an unofficial fork of
+[Evently](https://github.com/EbramWagdy1/evently).
 
 ## ✨ Features
 
 - 🏗️ **Clean Architecture** - Separation of concerns with clear layer boundaries
 - 💾 **Persistent Queue** - Retains queued events across application restarts
-- ⏰ **Background-only Uploads** - Uses best-effort Android and iOS background work
-- 🚫 **No Foreground Requests** - Event logging only writes to the local queue
+- ⏰ **Mobile Background Uploads** - Uses best-effort Android and iOS background work
+- 🌐 **Automatic Web Uploads** - Sends the durable queue while the browser page is active
+- 🚫 **No Foreground Mobile Requests** - Mobile event logging only writes to the local queue
 - 🌐 **Consumer-owned Endpoint** - Sends to the exact endpoint and headers you configure
 - 🛡️ **Error Handling** - Comprehensive error handling with custom exceptions
 - 📝 **Structured Logging** - Configurable logging for debugging
@@ -128,14 +130,15 @@ EventlyConfig(
   environment: 'production',                  // Sent as X-Evently-Environment
   debugMode: false,                           // Enable diagnostic logging
   requestTimeout: const Duration(seconds: 30),
-  enableBackgroundUpload: true,
+  enableBackgroundUpload: true,               // Android and iOS
+  enableWebUpload: true,                      // Active browser page
   backgroundUploadFrequency: const Duration(hours: 1), // Android interval
 )
 ```
 
 ### Upload protocol
 
-The background worker sends an HTTP `POST` to `uploadEndpoint` exactly as
+The platform uploader sends an HTTP `POST` to `uploadEndpoint` exactly as
 provided. Evently Plus sets `Content-Type: application/json`, adds
 `X-Evently-Environment`, and merges the configured `requestHeaders`. A request
 body has this shape:
@@ -161,15 +164,18 @@ body has this shape:
 
 Any HTTP status from 200 through 299 is treated as success, after which those
 events are removed from the queue. Other statuses and network errors preserve
-the events and report failure to the operating system's background scheduler.
+the events for a later attempt. On mobile, failure is reported to the operating
+system's background scheduler.
 
-## ⏰ Periodic Background Upload
+## ⏰ Platform Delivery
+
+### Android and iOS
 
 Background upload is enabled by default. During app runtime, every event is
 persisted locally and no upload is attempted. A Workmanager isolate is the only
-code path that sends events. The package exposes no foreground upload API. The
-task runs only when a network connection is available and uses one unique task
-registration to avoid duplicate schedules.
+mobile code path that sends events. The package exposes no foreground mobile
+upload API. The task runs only when a network connection is available and uses
+one unique task registration to avoid duplicate schedules.
 
 Android requires no additional host-app setup. For iOS, enable the `processing`
 background mode, permit the identifier
@@ -190,11 +196,36 @@ EventlyConfig(
 )
 ```
 
+### Web
+
+Web support requires no additional setup. Events use the same persistent queue
+and upload endpoint as mobile. Evently Plus attempts to send queued events when
+the SDK initializes and after each new event is persisted.
+
+Only one upload runs at a time. A failed request leaves the complete batch in
+the queue and it is retried after the next event or page load. Browsers cannot
+guarantee work after a page closes, so web delivery happens while the page is
+active rather than through a service worker.
+
+The upload endpoint must accept requests from the web application's origin and
+allow the configured request headers through CORS. Credentials included in a
+web build are visible to users; use a restricted ingestion token or a
+same-origin backend endpoint rather than a privileged secret.
+
+To keep events queued without sending them on web:
+
+```dart
+EventlyConfig(
+  uploadEndpoint: Uri.parse('https://api.example.com/v1/events'),
+  enableWebUpload: false,
+)
+```
+
 ## 🔧 Advanced Usage
 
 ### Check Pending Events
 
-Get the count of events waiting for background upload:
+Get the count of events waiting for upload:
 
 ```dart
 final count = await EventlyClient.instance.getPendingEventCount();
@@ -242,10 +273,9 @@ Evently Plus follows Clean Architecture principles:
 ├── 📁 domain/            # Business logic
 │   ├── entities/         # Core entities
 │   └── repositories/     # Repository contracts
-└── 📁 data/              # Data layer
-    ├── models/           # Data models
-    ├── datasources/      # Remote & local data sources
-    └── repositories/     # Repository implementations
+├── 📁 data/              # Queue storage and HTTP delivery
+├── 📁 background/        # Android and iOS scheduling
+└── 📁 upload/            # Shared uploader and platform runtime scheduler
 ```
 
 ## 🔒 Security Best Practices
@@ -255,10 +285,12 @@ Evently Plus follows Clean Architecture principles:
 3. **Validate input** - The SDK validates all events automatically
 4. **Sanitize PII** - Don't include sensitive personal information in events
 
-When background upload is enabled, Evently Plus persists `requestHeaders` in
-`SharedPreferences` so a background isolate can reconstruct the request. This
-storage is not encrypted. Use a scoped, revocable credential rather than a
-high-value long-lived secret, and reinitialize the client after rotating it.
+When mobile background upload is enabled, Evently Plus persists
+`requestHeaders` in `SharedPreferences` so a background isolate can reconstruct
+the request. This storage is not encrypted. On web, request configuration is
+necessarily visible to the browser. Use a scoped, revocable credential rather
+than a high-value long-lived secret, and reinitialize the client after rotating
+it.
 
 ## 🧪 Testing
 
@@ -310,8 +342,8 @@ await EventlyClient.instance.logEvent(
 - Configuration object for better organization
 - Properties map instead of simple description
 - Error handling with exceptions
-- Durable local queue and background-only delivery
-- Background-oriented architecture
+- Durable local queue with platform-appropriate delivery
+- Background-oriented mobile architecture with zero-setup web support
 
 ## 📄 License
 

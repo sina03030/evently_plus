@@ -12,6 +12,8 @@ import 'data/datasources/event_local_datasource.dart';
 import 'data/repositories/event_repository_impl.dart';
 import 'domain/entities/event.dart';
 import 'domain/repositories/event_repository.dart';
+import 'upload/runtime_upload_scheduler.dart';
+import 'upload/runtime_upload_scheduler_base.dart';
 
 /// Main client for Evently SDK.
 ///
@@ -26,6 +28,7 @@ class EventlyClient {
   final String platform;
   final String appVersion;
   final String releaseMarket;
+  final RuntimeUploadScheduler _runtimeUploadScheduler;
 
   /// Unique identifier shared by all events logged by this client runtime.
   final String sessionId;
@@ -38,7 +41,8 @@ class EventlyClient {
     required this.appVersion,
     required this.releaseMarket,
     required this.sessionId,
-  });
+    required RuntimeUploadScheduler runtimeUploadScheduler,
+  }) : _runtimeUploadScheduler = runtimeUploadScheduler;
 
   /// Get the singleton instance.
   ///
@@ -102,8 +106,14 @@ class EventlyClient {
       localDataSource: localDataSource,
       logger: effectiveLogger,
     );
+    final runtimeUploadScheduler = createRuntimeUploadScheduler(
+      config: config,
+      localDataSource: localDataSource,
+      logger: effectiveLogger,
+    );
 
     // Create and store instance
+    _instance?._runtimeUploadScheduler.dispose();
     _instance = EventlyClient._(
       config: config,
       logger: effectiveLogger,
@@ -112,6 +122,7 @@ class EventlyClient {
       appVersion: config.appVersion,
       releaseMarket: config.releaseMarket,
       sessionId: const Uuid().v4(),
+      runtimeUploadScheduler: runtimeUploadScheduler,
     );
 
     try {
@@ -130,11 +141,16 @@ class EventlyClient {
       );
     }
 
+    // On web, retry anything retained from an earlier page session. This is a
+    // no-op on platforms where Workmanager owns delivery.
+    runtimeUploadScheduler.requestUpload();
+
     effectiveLogger.info('Evently Plus SDK initialized successfully');
   }
 
   /// Reset the SDK instance (useful for testing).
   static void reset() {
+    _instance?._runtimeUploadScheduler.dispose();
     _instance = null;
   }
 
@@ -184,11 +200,12 @@ class EventlyClient {
       },
       (_) {
         logger.debug('Event tracked successfully: $name');
+        _runtimeUploadScheduler.requestUpload();
       },
     );
   }
 
-  /// Get the count of events waiting for background upload.
+  /// Get the count of events waiting for upload.
   Future<int> getPendingEventCount() async {
     final result = await repository.getPendingEvents();
     return result.fold(
@@ -200,7 +217,7 @@ class EventlyClient {
     );
   }
 
-  /// Clear all events waiting for background upload.
+  /// Clear all events waiting for upload.
   Future<void> clearPendingEvents() async {
     logger.info('Clearing all pending events');
     final result = await repository.clearPendingEvents();
