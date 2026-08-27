@@ -48,11 +48,11 @@ class WebRuntimeUploadScheduler implements RuntimeUploadScheduler {
   });
 
   @override
-  void requestUpload() {
-    if (_disposed) return;
+  Future<void> requestUpload() {
+    if (_disposed) return Future<void>.value();
 
     _uploadRequested = true;
-    _activeUpload ??= _drainUploadRequests();
+    return _activeUpload ??= _drainUploadRequests();
   }
 
   Future<void> _drainUploadRequests() async {
@@ -76,15 +76,6 @@ class WebRuntimeUploadScheduler implements RuntimeUploadScheduler {
     }
 
     _activeUpload = null;
-  }
-
-  /// Completes after all currently requested uploads have finished.
-  Future<void> waitForIdle() async {
-    while (true) {
-      final activeUpload = _activeUpload;
-      if (activeUpload == null) return;
-      await activeUpload;
-    }
   }
 
   @override

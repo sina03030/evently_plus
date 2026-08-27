@@ -3,7 +3,8 @@
 /// This is a no-op on mobile, where delivery remains owned by Workmanager. On
 /// web it sends the durable queue from the active browser page.
 abstract interface class RuntimeUploadScheduler {
-  void requestUpload();
+  /// Requests an upload and completes after all currently queued requests.
+  Future<void> requestUpload();
 
   void dispose();
 }
@@ -12,7 +13,7 @@ class NoopRuntimeUploadScheduler implements RuntimeUploadScheduler {
   const NoopRuntimeUploadScheduler();
 
   @override
-  void requestUpload() {}
+  Future<void> requestUpload() async {}
 
   @override
   void dispose() {}

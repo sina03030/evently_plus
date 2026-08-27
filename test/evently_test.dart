@@ -288,7 +288,7 @@ void main() {
       SharedPreferences.setMockInitialValues({});
     });
 
-    test('uploads queued events without overlapping requests', () async {
+    test('awaits queued events without overlapping requests', () async {
       final preferences = await SharedPreferences.getInstance();
       final localDataSource = EventLocalDataSourceImpl(
         prefs: preferences,
@@ -319,9 +319,9 @@ void main() {
         logger: const SilentLogger(),
       );
 
-      scheduler.requestUpload();
-      scheduler.requestUpload();
-      await scheduler.waitForIdle();
+      final firstUpload = scheduler.requestUpload();
+      final secondUpload = scheduler.requestUpload();
+      await Future.wait([firstUpload, secondUpload]);
 
       expect(requestCount, 1);
       expect(await localDataSource.getEvents(), isEmpty);

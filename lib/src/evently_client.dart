@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
@@ -143,7 +145,7 @@ class EventlyClient {
 
     // On web, retry anything retained from an earlier page session. This is a
     // no-op on platforms where Workmanager owns delivery.
-    runtimeUploadScheduler.requestUpload();
+    await runtimeUploadScheduler.requestUpload();
 
     effectiveLogger.info('Evently Plus SDK initialized successfully');
   }
@@ -200,7 +202,7 @@ class EventlyClient {
       },
       (_) {
         logger.debug('Event tracked successfully: $name');
-        _runtimeUploadScheduler.requestUpload();
+        unawaited(_runtimeUploadScheduler.requestUpload());
       },
     );
   }
