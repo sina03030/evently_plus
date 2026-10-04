@@ -236,7 +236,7 @@ class EventlyClient {
   }
 
   static String _currentPlatform() {
-    if (kIsWeb) return 'web';
+    if (kIsWeb) return 'pwa';
     if (defaultTargetPlatform == TargetPlatform.iOS) return 'ios';
     return defaultTargetPlatform.name;
   }
